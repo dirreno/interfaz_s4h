@@ -40,7 +40,6 @@ else:
 
     if st.button("Merge Databases"):
         if not isinstance(st.session_state.Merge_Base, pd.DataFrame):
-            breakpoint()
             st.session_state.Merge_Base = pd.merge(
                 st.session_state.Data_Bases[1], 
                 st.session_state.Data_Bases[0],

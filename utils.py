@@ -81,15 +81,10 @@ def filter_columns_by_nan_threshold(dataframe, threshold):
 
 @st.cache_data
 def load_covidcol_data():
-    return pd.read_csv("data/data_examples/Casos_positivos_de_COVID-19_en_Colombia._20240519_datosabiertos.csv", low_memory=False)
+    return pd.read_csv("data/Test_Covid_col_mini.csv", low_memory=False)
 @st.cache_data
 def load_percol_data():
-    file_pattern = os.path.join("data/input",'CNPV2018_5PER_A2_*')
-    filtered_files = glob.glob(file_pattern)
-    dfs = []
-    for file in tqdm(filtered_files):
-        df = pd.read_csv(file).loc[:, ["U_DPTO", "U_MPIO", "P_SEXO", "P_EDADR", "P_ENFERMO", "PA_LO_ATENDIERON", "PA1_CALIDAD_SERV", "P_TRABAJO"]]
-        dfs.append(df)
+    dfs = [pd.read_csv("data/Test_Censo_col_mini.csv"),pd.read_csv("data/Test_Censo_col_mini_cundinamarca.csv")]
     return pd.concat(dfs, ignore_index=True)
 # Function to generate bot response
 def get_bot_response(agent, user_input):
