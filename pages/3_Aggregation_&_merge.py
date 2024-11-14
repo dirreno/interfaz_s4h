@@ -15,7 +15,7 @@ if len(st.session_state.Data_Bases) < 2:
 else:
     st.subheader("Aggregation Process")
     
-    db_index = st.selectbox("Select database to aggregate", range(len(st.session_state.Data_Bases)))
+    db_index = st.selectbox("Select database to aggregate", range(len(st.session_state.Data_Bases)), format_func=lambda x: f"Database {x+1}")
     df = st.session_state.Data_Bases[db_index]
 
     groupby_col = st.selectbox("Select column to groupby", df.columns)
@@ -40,16 +40,9 @@ else:
 
     if st.button("Merge Databases"):
         if not isinstance(st.session_state.Merge_Base, pd.DataFrame):
-            st.session_state.Merge_Base = pd.merge(
-                st.session_state.Data_Bases[1], 
-                st.session_state.Data_Bases[0],
-                left_on=st.session_state.merge_cols[1],
-                right_on=st.session_state.merge_cols[0],
-                how='inner'
-            )
+            st.session_state.Merge_Base = st.session_state.Data_Bases[0].merge(st.session_state.Data_Bases[0], left_on=st.session_state.merge_cols[1],right_on=st.session_state.merge_cols[0],how='inner') 
         else: 
-            st.session_state.Merge_Base = pd.merge(
-                st.session_state.Merge_Base,
+            st.session_state.Merge_Base = st.session_state.Merge_Base.merge(
                 st.session_state.Data_Bases[-1],
                 left_on=st.session_state.merge_cols[0],
                 right_on=st.session_state.merge_cols[-1],

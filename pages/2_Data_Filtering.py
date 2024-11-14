@@ -13,7 +13,7 @@ with st.expander("ℹ️ Instructions", expanded=False):
 if not st.session_state.Data_Bases:
     st.warning("No data loaded. Please load data first.")
 else:
-    db_index = st.selectbox("Select database to filter", range(len(st.session_state.Data_Bases)))
+    db_index = st.selectbox("Select database to filter", range(len(st.session_state.Data_Bases)), format_func=lambda x: f"Database {x+1}")
     df = st.session_state.Data_Bases[db_index]
     st.write(df.head())
 

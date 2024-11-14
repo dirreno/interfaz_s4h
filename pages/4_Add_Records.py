@@ -218,8 +218,9 @@ else:
         if add_identifier:
             base_date = st.date_input("Date for Base Dataset")
             stack_date = st.date_input("Date for Stack Dataset")
-            
-        if st.button("Preview Stacking") and col_map:
+                           
+        # Confirm stacking
+        if st.button("Confirm and Stack Datasets") and col_map:
             try:
                 # Prepare dataframes for stacking
                 base_subset = base_df.copy()
@@ -244,11 +245,6 @@ else:
                 
                 # Stack datasets
                 stacked_df = pd.concat([base_subset, stack_subset], axis=0, ignore_index=True)
-                
-                # Show preview
-                st.subheader("Preview of Stacked Dataset")
-                st.write(stacked_df.head())
-                
                 # Show statistics
                 st.subheader("Stacking Statistics")
                 col1, col2 = st.columns(2)
@@ -258,17 +254,13 @@ else:
                 with col2:
                     st.metric("New Columns", len(new_columns))
                     st.metric("Bifurcated Columns", len(st.session_state.column_evolution['bifurcations']))
-                
-                # Confirm stacking
-                if st.button("Confirm and Stack Datasets"):
-                    st.session_state.Data_Bases.append(stacked_df)
-                    st.success("Datasets stacked successfully!")
-                    st.rerun()
-                
+                st.session_state.Data_Bases.append(stacked_df)
+                st.success("Datasets stacked successfully!")
+        
             except Exception as e:
                 st.error(f"Error stacking datasets: {str(e)}")
                 st.write("Please check your column mappings and try again.")
-
+            
     # Option to remove the last added database
     if len(st.session_state.Data_Bases) > 0:
         if st.button("Remove Last Added Database"):

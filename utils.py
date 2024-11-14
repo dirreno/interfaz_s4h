@@ -34,39 +34,6 @@ def filter_columns(df):
     if st.button("Select Columns", key="c"):
         return df.loc[:,columns]
 
-def load_data(source:str):
-    data = None
-    harmonizer = Harmonizer()
-
-    if source == "url":
-        st.subheader("Enter URLs for datasets")
-        col1, col2 = st.columns(2)
-        with col1:
-            url_1 = st.text_area("Enter URL for Dataset:", height=10,value="https://microdatos.dane.gov.co/index.php/catalog/663",key="u1")
-            extensions_1 = st.multiselect("Choose data source", ['.csv', '.xls', '.xlsx', ".txt", ".sav", ".zip"], default=[".csv",".zip"], key="exts")
-        with col2:
-            key_words_1 = st.text_area("Enter relevant keywords (separated by commas ',')", height=10,value=None,key="kw1")
-            depth_1 = st.number_input('Enter a number', min_value=0, max_value=10, value=1, step=1)
-            if st.button("Confirm Downloading info"):
-                list_datainfo = harmonizer.extract(url=url_1, depth=depth_1, down_ext=extensions_1, key_words=key_words_1)
-                harmonizer = Harmonizer(list_datainfo)
-                data = harmonizer.transform()[0].data
-                st.write("XD")
-    elif source == "local":
-        uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-        if uploaded_file is not None:
-            data = pd.read_csv(uploaded_file, low_memory=False)
-    elif source == "Col case: Covid19 Data":
-        st.subheader("Example Dataset 1")
-        data = load_covidcol_data()
-    elif source == "Col case: Col People Census Data":
-        st.subheader("Example Dataset 2")
-        data = load_percol_data()
-    else:
-        data = pd.read_csv("Sample_Data.csv", low_memory=False)
-    st.write(data.head())
-    return data
-
 def mode(series):
     mode = series.mode()
     if len(mode) > 1:
@@ -81,11 +48,8 @@ def filter_columns_by_nan_threshold(dataframe, threshold):
 
 @st.cache_data
 def load_covidcol_data():
-    return pd.read_csv("data/Test_Covid_col_mini.csv", low_memory=False)
-@st.cache_data
-def load_percol_data():
     dfs = [pd.read_csv("data/Test_Censo_col_mini.csv"),pd.read_csv("data/Test_Censo_col_mini_cundinamarca.csv")]
-    return pd.concat(dfs, ignore_index=True)
+    return [pd.concat(dfs, ignore_index=True),pd.read_csv("data/Test_Covid_col_mini.csv", low_memory=False)]
 # Function to generate bot response
 def get_bot_response(agent, user_input):
     user_input = user_input.lower()

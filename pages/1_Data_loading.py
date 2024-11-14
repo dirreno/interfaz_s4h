@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils import initialize_session_state
-from  utils import load_covidcol_data, load_percol_data, Harmonizer
+from  utils import load_covidcol_data, Harmonizer
 from instructions import INSTRUCTIONS
 st.set_page_config(page_title="Data Loading", page_icon="🗃️")
 
@@ -18,8 +18,7 @@ states = ["Select Source",
 st.title("Data Loading 🗃️")
 st.subheader(f"Data Base: {len(st.session_state.Data_Bases)+1} → Select Data Source")
 
-col_case = "Col case: Covid19 Data" if len(st.session_state.Data_Bases) == 0 else "Col case: Col People Census Data"
-st.session_state.source_data = st.selectbox("Choose data source", ["url", "local", col_case, "Health Data", "Test"])
+st.session_state.source_data = st.selectbox("Choose data source", ["Select an Option","url", "local", "Col case: Census & Covid19", "Health Data", "Test"])
 
 if st.session_state.state == "Select Source":
     if st.button("Load Data"):
@@ -47,17 +46,15 @@ if st.session_state.state == "Load Data":
         uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file, low_memory=False)
-    elif source == "Col case: Covid19 Data":
-        st.subheader("Example Dataset 1")
-        data = load_covidcol_data()
-    elif source == "Col case: Col People Census Data":
-        st.subheader("Example Dataset 2")
-        data = load_percol_data()
+    elif source == "Col case: Census & Covid19":
+        st.subheader("Subset: Colombian Demographic & Health Data")
+        st.session_state.Data_Bases = load_covidcol_data()
     elif source == "Health Data":
+        st.subheader("Data to stack an variable tracking")
         st.session_state.Data_Bases = [pd.read_csv("data/health_data_2018.csv", low_memory=False), pd.read_csv("data/health_data_2020.csv", low_memory=False), 
                                        pd.read_csv("data/health_data_2021.csv", low_memory=False), pd.read_csv("data/health_data_2022.csv", low_memory=False), 
                                        pd.read_csv("data/health_data_2023.csv", low_memory=False)]
-    else:
+    elif source == "Test":
         data = pd.read_csv("data/Sample_Data.csv", low_memory=False)
     
     if isinstance(data, pd.DataFrame):
@@ -66,6 +63,9 @@ if st.session_state.state == "Load Data":
         st.success("Data loaded successfully!")
         if st.button("Add new DataBase"):
             pass
+    elif st.session_state.Data_Bases:
+        for i in st.session_state.Data_Bases:
+            st.write(i.head())
 
 
 st.write(f"Total databases loaded: {len(st.session_state.Data_Bases)}")
