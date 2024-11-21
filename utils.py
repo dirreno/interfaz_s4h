@@ -77,5 +77,5 @@ def mermaid(code: str) -> None:
             mermaid.initialize({{ startOnLoad: true }});
         </script>
         """,
-        height= 100,
+        height= 250,
     )

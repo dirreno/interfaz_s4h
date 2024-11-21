@@ -130,7 +130,7 @@ states = ["Select Source", "Load Data"]
 st.title("Data Loading 🗃️")
 st.subheader(f"Data Base: {len(st.session_state.Data_Bases)+1} → Select Data Source")
 
-st.session_state.source_data = st.selectbox("Choose data source", ["Select an Option","url", "local", "Col case: Census & Covid19", "Health Data", "Test"])
+st.session_state.source_data = st.selectbox("Choose data source", ["Select an Option","Internet (URL)", "Local file", "Col case: Census & Covid19", "Health Data", "Test"])
 
 if st.session_state.state == "Select Source":
     if st.button("Load Data"):
@@ -141,7 +141,7 @@ if st.session_state.state == "Load Data":
 
     data = None
     harmonizer = Harmonizer()
-    if source == "url":
+    if source == "Internet (URL)":
         st.subheader("Enter URLs for datasets")
         col1, col2 = st.columns(2)
         with col1:
@@ -154,7 +154,7 @@ if st.session_state.state == "Load Data":
             list_datainfo = harmonizer.extract(url=url_1, depth=depth_1, down_ext=extensions_1, key_words=key_words_1)
             harmonizer = Harmonizer(list_datainfo)
             data = harmonizer.transform()[0].data
-    elif source == "local":
+    elif source == "Local file":
         uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
         if uploaded_file is not None:
             data = pd.read_csv(uploaded_file, low_memory=False)

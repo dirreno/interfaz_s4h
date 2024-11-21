@@ -4,6 +4,7 @@ from utils import get_bot_response
 from langchain_groq import ChatGroq
 import pandas as pd
 from instructions import INSTRUCTIONS
+from pandasai import Agent
 
 st.set_page_config(page_title="Chat with Data", page_icon="💬")
 
@@ -29,11 +30,11 @@ else:
     st.write(st.session_state.chat_df.head())
 
     llm = ChatGroq(
-        model_name="mixtral-8x7b-32768", 
+        model_name="llama3-70b-8192", 
         api_key=st.session_state.groq_key
     )
   
-    agent = BirdAgent(dfs=st.session_state.chat_df, config={"llm": llm})
+    agent = Agent(dfs=st.session_state.chat_df, config={"llm": llm})
     if not st.session_state.messages:
         st.session_state.messages.append({"role": "assistant", "content": "Hello! Let’s dive into your data"})
     for message in st.session_state.messages:

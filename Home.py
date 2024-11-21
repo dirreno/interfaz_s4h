@@ -35,9 +35,10 @@ graph LR
     A[Load Data] --> B[Filter Data]
     B --> C[Chat with Data]
     B --> D[Aggregate & Merge]
+    B --> E[Stack Data]
+    E --> C
     D --> C
-    C --> E[Insights]
-   
+    C --> F[Insights]
 """
 mermaid(workflow)
 

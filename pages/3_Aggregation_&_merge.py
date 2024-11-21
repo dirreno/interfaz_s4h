@@ -49,5 +49,5 @@ else:
                 how='inner'
             )
         st.success("Databases merged successfully!")
-        st.write(st.session_state.Merge_Base.head())
+        st.write(st.session_state.Merge_Base)
 

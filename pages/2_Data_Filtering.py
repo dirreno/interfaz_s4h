@@ -17,7 +17,7 @@ else:
     df = st.session_state.Data_Bases[db_index]
     st.write(df.head())
 
-    st.subheader("Filter: Threshold for NaN values in columns")
+    st.subheader("Filter: No missing values porcentage")
     threshold = st.slider("NaN Threshold for DataBase", 0, 100, 10, step=10)
     
     if st.button("Apply Threshold"):
