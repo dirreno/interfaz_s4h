@@ -1,3 +1,5 @@
 exports
 cache
 pruebas.py
+*.log
+data/input
