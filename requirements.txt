@@ -1,0 +1,8 @@
+tqdm
+pandas
+pandasai
+streamlit
+langchain_groq
+seaborn
+numpy
+matplotlib
