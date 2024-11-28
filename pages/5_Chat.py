@@ -31,7 +31,8 @@ else:
 
     llm = ChatGroq(
         model_name="llama3-70b-8192", 
-        api_key=st.session_state.groq_key
+        api_key=st.session_state.groq_key,
+        max_retries=100
     )
   
     agent = Agent(dfs=st.session_state.chat_df, config={"llm": llm})
