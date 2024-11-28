@@ -7,3 +7,4 @@ seaborn
 numpy
 matplotlib
 nyctibius
+extra_streamlit_components
