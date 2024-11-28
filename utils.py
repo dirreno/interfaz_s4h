@@ -1,6 +1,4 @@
 import streamlit as st
-import os
-import glob
 from tqdm import tqdm
 import pandas as pd
 from nyctibius import Harmonizer

@@ -9,3 +9,4 @@ matplotlib
 nyctibius
 extra_streamlit_components
 networkx
+groq==0.12.0
