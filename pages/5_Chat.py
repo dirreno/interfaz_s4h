@@ -5,14 +5,15 @@ from langchain_groq import ChatGroq
 import pandas as pd
 from instructions import INSTRUCTIONS
 from pandasai import Agent
-from utils import MyStResponseParser
+from utils import MyStResponseParser, generate_sample_questions
+import pyperclip
 
 st.set_page_config(page_title="Chat with Data", page_icon="💬")
 
 st.title("Chat with your data 💬")
 
-if 'Data_Bases' not in st.session_state:
-        st.session_state.Data_Bases = []
+if "sample_questions" not in st.session_state:
+    st.session_state.sample_questions = []
 
 with st.expander("ℹ️ Instructions", expanded=False):
     st.markdown(INSTRUCTIONS["chat"])
@@ -38,6 +39,32 @@ else:
         api_key=st.session_state.groq_key,
         max_retries=100
     )
+
+    with st.spinner("🔄 Analyzing your data..."):
+        st.session_state.sample_questions = generate_sample_questions(st.session_state.chat_df, llm)
+        st.markdown("### 🤔 Sample Questions You Can Ask")
+        st.markdown("""
+            Below are some example questions you can ask about your dataset. 
+            Click any 'Copy' button to copy the question to your clipboard!
+        """)
+        
+        for i, qa in enumerate(st.session_state.sample_questions, 1):
+            with st.expander(f"❓ Question {i}: {qa['question']}"):
+                if st.button(f"📋 Copy Question", key=f"copy_q_{i}"):
+                    try:
+                        pyperclip.copy(qa['question'])
+                        st.success("Question copied to clipboard!")
+                    except Exception as e:
+                        st.error(f"Failed to copy: {str(e)}")
+                        # Fallback JavaScript method
+                        st.markdown(
+                            f"""
+                            <script>
+                                copyToClipboard("{qa['question']}");
+                            </script>
+                            """,
+                            unsafe_allow_html=True
+                        )
   
     agent = Agent(dfs=st.session_state.chat_df, config={"llm": llm, "response_parser": MyStResponseParser})
     if not st.session_state.messages:

@@ -152,3 +152,54 @@ Provide only the JSON response without any additional text."""
     except Exception as e:
         st.error(f"Error in description generation: {str(e)}")
         return {col: f"Description for {col}" for col in data.columns}
+    
+def generate_sample_questions(data, model):
+    """Generate sample questions and answers based on the dataset."""
+    data_info = f"Column names: {', '.join(data.columns)}\n"
+    data_info += "Sample data (first 5 rows):\n"
+    data_info += data.head().to_string()
+    
+    prompt = f"""As a data analyst, generate 5 insightful questions and their answers for this dataset.
+    
+Data Information:
+{data_info}
+
+Instructions:
+1. Generate 5 diverse questions that showcase different types of analysis
+2. Include questions about trends, patterns, statistics, and relationships
+3. Provide clear, concise answers
+4. Format as JSON with "questions" array containing objects with "question" and "answer" fields
+
+Example format:
+{{
+    "questions": [
+        {{"question": "What is the average value of X?", "answer": "The average value is Y"}},
+        {{"question": "How many unique entries are in column Z?", "answer": "There are N unique entries"}}
+    ]
+}}
+
+Provide only the JSON response."""
+
+    try:
+        response = model.invoke(prompt)
+        questions = extract_json_from_response(response)
+        
+        if questions is None or 'questions' not in questions:
+            return generate_default_questions()
+            
+        return questions['questions']
+    
+    except Exception as e:
+        st.error(f"Error generating questions: {str(e)}")
+        return generate_default_questions()
+    
+def generate_default_questions():
+    """Generate default questions if the LLM fails."""
+    return [
+        {"question": "What are the unique values in categorical columns?", "answer": "I can list unique values and their frequencies."},
+        {"question": "Are there any missing values in the dataset?", "answer": "I can check for null values in each column."},
+        {"question": "Can you create a summary visualization?", "answer": "I can create various plots based on your data type."},
+        {"question": "What are the correlations between numerical columns?", "answer": "I can calculate and visualize correlations."},
+        {"question": "Can you show the distribution of values?", "answer": "I can create histograms or box plots."},
+        {"question": "Can you identify any outliers?", "answer": "I can use statistical methods to detect outliers."}
+    ]
