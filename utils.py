@@ -5,6 +5,8 @@ from nyctibius import Harmonizer
 from langchain_groq.chat_models import ChatGroq
 from pandasai import Agent
 from streamlit.components.v1 import html
+from pandasai.responses.response_parser import ResponseParser
+import json
 
 def initialize_session_state():
     if 'Data_Bases' not in st.session_state:
@@ -48,6 +50,7 @@ def filter_columns_by_nan_threshold(dataframe, threshold):
 def load_covidcol_data():
     dfs = [pd.read_csv("data/Test_Censo_col_mini.csv"),pd.read_csv("data/Test_Censo_col_mini_cundinamarca.csv")]
     return [pd.concat(dfs, ignore_index=True),pd.read_csv("data/Test_Covid_col_mini.csv", low_memory=False)]
+
 # Function to generate bot response
 def get_bot_response(agent, user_input):
     user_input = user_input.lower()
@@ -60,8 +63,7 @@ def get_bot_response(agent, user_input):
     elif "name" in user_input:
         return "My name is ChatBot. Nice to meet you!"
     else:
-        return agent.chat(user_input)#"I'm sorry, I don't understand that. Can you please rephrase or ask something else?"
-
+        return agent.chat(user_input)
 
 def mermaid(code: str) -> None:
     html(
@@ -77,3 +79,76 @@ def mermaid(code: str) -> None:
         """,
         height= 250,
     )
+
+# Handle response messages according to type: dataframe, plot or text
+class MyStResponseParser(ResponseParser):
+    def __init__(self, context) -> None:
+        super().__init__(context)
+    def parse(self, result):
+        if result['type'] == "dataframe":
+            st.dataframe(result['value'])
+        elif result['type'] == 'plot':
+            st.image(result["value"])
+        else:
+            st.write(result['value'])
+        return result
+
+def extract_json_from_response(response):
+    """Extract JSON from LLM response, handling different response formats."""
+    response_text = response.content if hasattr(response, 'content') else str(response)
+    
+    try:
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        try:
+            start = response_text.find('{')
+            end = response_text.rfind('}') + 1
+            if start >= 0 and end > 0:
+                json_str = response_text[start:end]
+                return json.loads(json_str)
+        except:
+            return None
+    return None
+
+def generate_column_descriptions(data, model):
+    """Generate descriptions for columns using LLM."""
+    data_info = f"Column names: {', '.join(data.columns)}\n\n"
+    data_info += "Sample data (first 5 rows):\n"
+    data_info += data.head().to_string()
+    
+    prompt = f"""As a data analyst, generate clear descriptions for each column in this dataset.
+    
+Data Information:
+{data_info}
+
+Instructions:
+1. For each column, write a clear 1-2 sentence description explaining what the data represents
+2. Format your response as a JSON object where keys are column names and values are descriptions
+3. Focus on the practical meaning and use of each column
+4. Be concise but informative
+
+Example format:
+{{
+    "column_name": "This column represents... It is used for...",
+    "another_column": "Contains information about... Used to track..."
+}}
+
+Provide only the JSON response without any additional text."""
+
+    try:
+        response = model.invoke(prompt)
+        descriptions = extract_json_from_response(response)
+        
+        if descriptions is None:
+            st.error("Failed to generate proper descriptions. Using default ones.")
+            descriptions = {col: f"Description for {col}" for col in data.columns}
+        
+        for col in data.columns:
+            if col not in descriptions:
+                descriptions[col] = f"Description for {col}"
+                
+        return descriptions
+    
+    except Exception as e:
+        st.error(f"Error in description generation: {str(e)}")
+        return {col: f"Description for {col}" for col in data.columns}

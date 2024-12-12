@@ -3,29 +3,37 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from utils import initialize_session_state
-from utils import load_covidcol_data, Harmonizer
+from utils import initialize_session_state, load_covidcol_data, Harmonizer, generate_column_descriptions
 from instructions import INSTRUCTIONS
+from langchain_groq import ChatGroq
 
 def perform_eda(df):
     """
     Perform exploratory data analysis on the loaded dataframe
     """
-    st.subheader("📊 Exploratory Data Analysis")
-    
-    # Basic Dataset Information
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Number of Rows", df.shape[0])
-    with col2:
-        st.metric("Number of Columns", df.shape[1])
-    with col3:
-        st.metric("Memory Usage (MB)", round(df.memory_usage().sum() / 1024**2, 2))
 
-    # Data Overview
-    with st.expander("📋 Data Overview", expanded=True):
-        st.write("First few rows of the dataset:")
-        st.dataframe(df.head())
+    llm = ChatGroq(
+        model_name="llama-3.3-70b-versatile",#llama3-70b-8192 
+        api_key="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",
+        max_retries=100
+    )
+
+    st.subheader("📊 Data Overview")
+    with st.spinner("🔄 Analyzing your data..."):
+        st.session_state.field_descriptions = generate_column_descriptions(data, llm)
+    
+    overview_tab, desc_tab, eda = st.tabs([
+        "Summary", "Column Descriptions", "Exploratory Data Analysis"
+    ])
+
+    with overview_tab:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Rows", f"{len(data):,}")
+        with col2:
+            st.metric("Total Columns", f"{len(data.columns):,}")
+        with col3:
+            st.metric("Memory Usage", f"{data.memory_usage().sum() / 1024**2:.2f} MB")
         
         st.write("Data Types and Non-Null Counts:")
         buffer = pd.DataFrame({
@@ -35,85 +43,99 @@ def perform_eda(df):
             'Null Percentage': (df.isna().sum() / len(df) * 100).round(2)
         })
         st.dataframe(buffer)
+    
+    with desc_tab:
+        for column in data.columns:
+            with st.expander(f"📝 {column}"):
+                current_description = st.session_state.field_descriptions.get(column, f"Description for {column}")
+                new_description = st.text_area(
+                    "Edit description:",
+                    value=current_description,
+                    key=f"desc_{column}",
+                    height=100
+                )
+                st.session_state.field_descriptions[column] = new_description
 
-    # Numerical Analysis
-    numerical_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    if len(numerical_cols) > 0:
-        with st.expander("📈 Numerical Columns Analysis", expanded=True):
-            st.write("Statistical Summary of Numerical Columns:")
-            st.dataframe(df[numerical_cols].describe())
-            
-            # Distribution plots
-            st.write("Distribution Plots:")
-            default_cols = numerical_cols[:min(3, len(numerical_cols))]
-            cols_to_plot = st.multiselect(
-                "Select columns to plot distribution",
-                options=numerical_cols,
-                default=default_cols
-            )
-            
-            if cols_to_plot:
-                fig, axes = plt.subplots(1, len(cols_to_plot), figsize=(5*len(cols_to_plot), 4))
-                if len(cols_to_plot) == 1:
-                    axes = [axes]
-                    
-                for ax, col in zip(axes, cols_to_plot):
-                    sns.histplot(data=df, x=col, ax=ax)
-                    ax.set_title(f'Distribution of {col}')
+    with eda:
+       
+        # Numerical Analysis
+        numerical_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        if len(numerical_cols) > 0:
+            with st.expander("📈 Numerical Columns Analysis", expanded=True):
+                st.write("Statistical Summary of Numerical Columns:")
+                st.dataframe(df[numerical_cols].describe())
+                
+                # Distribution plots
+                st.write("Distribution Plots:")
+                default_cols = numerical_cols[:min(3, len(numerical_cols))]
+                cols_to_plot = st.multiselect(
+                    "Select columns to plot distribution",
+                    options=numerical_cols,
+                    default=default_cols
+                )
+                
+                if cols_to_plot:
+                    fig, axes = plt.subplots(1, len(cols_to_plot), figsize=(5*len(cols_to_plot), 4))
+                    if len(cols_to_plot) == 1:
+                        axes = [axes]
+                        
+                    for ax, col in zip(axes, cols_to_plot):
+                        sns.histplot(data=df, x=col, ax=ax)
+                        ax.set_title(f'Distribution of {col}')
+                        plt.xticks(rotation=45)
+                    st.pyplot(fig)
+                    plt.close()
+
+        # Categorical Analysis
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+        if len(categorical_cols) > 0:
+            with st.expander("📊 Categorical Columns Analysis", expanded=True):
+                st.write("Value Counts for Categorical Columns:")
+                selected_cat_col = st.selectbox(
+                    "Select categorical column",
+                    options=categorical_cols
+                )
+                
+                if selected_cat_col:
+                    value_counts = df[selected_cat_col].value_counts()
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    value_counts.plot(kind='bar')
+                    plt.title(f'Value Counts for {selected_cat_col}')
                     plt.xticks(rotation=45)
+                    st.pyplot(fig)
+                    plt.close()
+                    
+                    st.write("Top 10 Categories:")
+                    st.dataframe(value_counts.head(10))
+
+        # Correlation Analysis
+        if len(numerical_cols) > 1:
+            with st.expander("🔄 Correlation Analysis", expanded=True):
+                correlation_matrix = df[numerical_cols].corr()
+                
+                fig, ax = plt.subplots(figsize=(10, 8))
+                sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
+                plt.title('Correlation Matrix')
                 st.pyplot(fig)
                 plt.close()
 
-    # Categorical Analysis
-    categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
-    if len(categorical_cols) > 0:
-        with st.expander("📊 Categorical Columns Analysis", expanded=True):
-            st.write("Value Counts for Categorical Columns:")
-            selected_cat_col = st.selectbox(
-                "Select categorical column",
-                options=categorical_cols
-            )
+        # Missing Values Analysis
+        with st.expander("❓ Missing Values Analysis", expanded=True):
+            missing_data = pd.DataFrame({
+                'Missing Values': df.isnull().sum(),
+                'Percentage': (df.isnull().sum() / len(df) * 100).round(2)
+            }).sort_values('Percentage', ascending=False)
             
-            if selected_cat_col:
-                value_counts = df[selected_cat_col].value_counts()
+            st.write("Missing Values Summary:")
+            st.dataframe(missing_data[missing_data['Missing Values'] > 0])
+            
+            if missing_data['Missing Values'].sum() > 0:
                 fig, ax = plt.subplots(figsize=(10, 6))
-                value_counts.plot(kind='bar')
-                plt.title(f'Value Counts for {selected_cat_col}')
+                missing_data[missing_data['Missing Values'] > 0]['Percentage'].plot(kind='bar')
+                plt.title('Missing Values Percentage by Column')
                 plt.xticks(rotation=45)
                 st.pyplot(fig)
                 plt.close()
-                
-                st.write("Top 10 Categories:")
-                st.dataframe(value_counts.head(10))
-
-    # Correlation Analysis
-    if len(numerical_cols) > 1:
-        with st.expander("🔄 Correlation Analysis", expanded=True):
-            correlation_matrix = df[numerical_cols].corr()
-            
-            fig, ax = plt.subplots(figsize=(10, 8))
-            sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0)
-            plt.title('Correlation Matrix')
-            st.pyplot(fig)
-            plt.close()
-
-    # Missing Values Analysis
-    with st.expander("❓ Missing Values Analysis", expanded=True):
-        missing_data = pd.DataFrame({
-            'Missing Values': df.isnull().sum(),
-            'Percentage': (df.isnull().sum() / len(df) * 100).round(2)
-        }).sort_values('Percentage', ascending=False)
-        
-        st.write("Missing Values Summary:")
-        st.dataframe(missing_data[missing_data['Missing Values'] > 0])
-        
-        if missing_data['Missing Values'].sum() > 0:
-            fig, ax = plt.subplots(figsize=(10, 6))
-            missing_data[missing_data['Missing Values'] > 0]['Percentage'].plot(kind='bar')
-            plt.title('Missing Values Percentage by Column')
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-            plt.close()
 
 # Main script
 st.set_page_config(page_title="Data Loading", page_icon="🗃️")
@@ -174,6 +196,7 @@ if st.session_state.state == "Load Data":
         data = pd.read_csv("data/Sample_Data.csv", low_memory=False)
     
     if isinstance(data, pd.DataFrame):
+        st.subheader("📊 Data Preview")
         st.session_state.Data_Bases.append(data)
         st.write(st.session_state.Data_Bases[-1].head())
         st.success("Data loaded successfully!")
