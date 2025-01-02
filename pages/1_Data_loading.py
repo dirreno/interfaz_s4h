@@ -20,7 +20,7 @@ def perform_eda(df):
 
     st.subheader("📊 Data Overview")
     with st.spinner("🔄 Analyzing your data..."):
-        st.session_state.field_descriptions = generate_column_descriptions(data, llm)
+        st.session_state.field_descriptions = generate_column_descriptions(df, llm)
     
     overview_tab, desc_tab, eda = st.tabs([
         "Summary", "Column Descriptions", "Exploratory Data Analysis"
@@ -29,11 +29,11 @@ def perform_eda(df):
     with overview_tab:
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Total Rows", f"{len(data):,}")
+            st.metric("Total Rows", f"{len(df):,}")
         with col2:
-            st.metric("Total Columns", f"{len(data.columns):,}")
+            st.metric("Total Columns", f"{len(df.columns):,}")
         with col3:
-            st.metric("Memory Usage", f"{data.memory_usage().sum() / 1024**2:.2f} MB")
+            st.metric("Memory Usage", f"{df.memory_usage().sum() / 1024**2:.2f} MB")
         
         st.write("Data Types and Non-Null Counts:")
         buffer = pd.DataFrame({
