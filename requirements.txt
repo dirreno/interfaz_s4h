@@ -1,12 +1,10 @@
-tqdm
+socio4health
 pandas
-pandasai==2.4.0
 streamlit
 langchain-groq==0.2.1
 seaborn
 numpy
 matplotlib
-nyctibius
 extra_streamlit_components
 networkx
 groq==0.12.0

@@ -1,11 +1,7 @@
 import streamlit as st
-from tqdm import tqdm
 import pandas as pd
-from nyctibius import Harmonizer
-from langchain_groq.chat_models import ChatGroq
-from pandasai import Agent
+import socio4health as s4h
 from streamlit.components.v1 import html
-from pandasai.responses.response_parser import ResponseParser
 import json
 
 def initialize_session_state():
@@ -79,19 +75,6 @@ def mermaid(code: str) -> None:
         """,
         height= 250,
     )
-
-# Handle response messages according to type: dataframe, plot or text
-class MyStResponseParser(ResponseParser):
-    def __init__(self, context) -> None:
-        super().__init__(context)
-    def parse(self, result):
-        if result['type'] == "dataframe":
-            st.dataframe(result['value'])
-        elif result['type'] == 'plot':
-            st.image(result["value"])
-        else:
-            st.write(result['value'])
-        return result
 
 def extract_json_from_response(response):
     """Extract JSON from LLM response, handling different response formats."""

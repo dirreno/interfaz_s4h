@@ -3,3 +3,4 @@ cache
 pruebas.py
 *.log
 data/input
+.idea
