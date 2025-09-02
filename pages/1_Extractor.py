@@ -158,7 +158,7 @@ elif st.session_state.source_data == "Local file":
         is_fwf = render_fwf_options()
 
     sep = ','
-    encoding = 'utf-8'
+    encoding = 'latin1'
     if any(ext in ['.csv', '.txt'] for ext in extensions):
         sep, encoding = render_csv_options()
 
