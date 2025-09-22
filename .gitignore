@@ -2,5 +2,5 @@ exports
 cache
 pruebas.py
 *.log
-data/input
+data
 .idea

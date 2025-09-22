@@ -3,17 +3,17 @@ from pathlib import Path
 import streamlit as st
 import os
 import tempfile
-from utils import initialize_session_state
 from instructions import INSTRUCTIONS
 from socio4health import Extractor
 
 st.set_page_config(page_title="Data Extraction", page_icon="📥", layout="wide")
 
-initialize_session_state()
-
-# Initialize Data_Bases if not exists
-if 'Data_Bases' not in st.session_state:
-    st.session_state.Data_Bases = []
+if 'Data_Sources' not in st.session_state:
+    st.session_state.Data_Sources = []
+if "colnames" not in st.session_state:
+    st.session_state.colnames = None
+if "colspecs" not in st.session_state:
+    st.session_state.colspecs = None
 
 st.title("Data Extraction 📥")
 
@@ -27,7 +27,7 @@ if 'source_data' not in st.session_state:
 
 st.session_state.source_data = st.selectbox(
     "Choose data source",
-    ["Select an Option", "Internet (URL)", "Local file"]
+    ["Select an Option", "Internet (URL)", "Local file", "Example Brazil Census 2010", "Example Colombia Housing Survey 2021"],
 )
 
 
@@ -40,10 +40,10 @@ def handle_extraction(extractor, source_type):
             st.success("Data extraction completed successfully!")
 
             if isinstance(result, list):
-                st.session_state.Data_Bases.extend(result)
+                st.session_state.Data_Sources.extend(result)
                 st.info(f"Added {len(result)} datasets to your workspace")
             else:
-                st.session_state.Data_Bases.append(result)
+                st.session_state.Data_Sources.append(result)
                 st.info("Added 1 dataset to your workspace")
 
             return True
@@ -69,11 +69,16 @@ def render_csv_options():
 
 def render_fwf_options():
     is_fwf = st.toggle("Is a fixed width file?")
+    colnames = st.session_state.get("colnames", None)
+    colspecs = st.session_state.get("colspecs", None)
+
     if is_fwf:
-        #TODO Add fixed width file options
-        st.write("Fixed width file options would go here")
-        return True
-    return False
+        if colnames and colspecs:
+            st.write("Column Names available:", colnames)
+            st.write("Column Specs available:", colspecs)
+        else:
+            st.info("No column names or specifications found. Please upload and standardize a dictionary first.")
+    return is_fwf, colnames, colspecs
 
 def render_extensions(detected_exts = ('.csv', '.zip')):
     extensions = st.multiselect(
@@ -100,7 +105,7 @@ if st.session_state.source_data == "Internet (URL)":
         extensions = render_extensions()
 
         if any(ext in ['.txt'] for ext in extensions):
-            is_fwf = render_fwf_options()
+            is_fwf,colnames,colspecs = render_fwf_options()
         if any(ext in ['.csv', '.txt'] for ext in extensions):
             sep, encoding = render_csv_options()
 
@@ -126,7 +131,9 @@ if st.session_state.source_data == "Internet (URL)":
                 output_path="./data",
                 depth=depth,
                 key_words=[kw.strip() for kw in key_words.split(",")] if key_words else None,
-                is_fwf = is_fwf
+                is_fwf = is_fwf,
+                colnames = colnames,
+                colspecs = colspecs
             )
 
             # Perform extraction
@@ -140,6 +147,7 @@ if st.session_state.source_data == "Internet (URL)":
 elif st.session_state.source_data == "Local file":
     st.subheader("Upload local files")
 
+
     uploaded_files = st.file_uploader(
         "Choose file",
         type=['csv', 'xlsx', 'xls', 'txt', 'sav', 'zip', '7z', 'tar', 'gz', 'tgz'],
@@ -151,15 +159,14 @@ elif st.session_state.source_data == "Local file":
     files_extensions = [os.path.splitext(f.name)[1].lower() for f in uploaded_files] if uploaded_files else []
     extensions = files_extensions
 
-    if files_extensions == '.zip' and uploaded_files is not None:
-        extensions = render_extensions(extensions)
+    extensions = render_extensions(extensions)
 
     if any(ext in ['.txt'] for ext in extensions):
-        is_fwf = render_fwf_options()
+        is_fwf, colnames, colspecs = render_fwf_options()
 
     sep = ','
     encoding = 'latin1'
-    if any(ext in ['.csv', '.txt'] for ext in extensions):
+    if any(ext in ['.csv'] for ext in extensions):
         sep, encoding = render_csv_options()
 
     if uploaded_files is not None and st.button("Process Local Files"):
@@ -170,27 +177,41 @@ elif st.session_state.source_data == "Local file":
                     with open(file_path, "wb") as f:
                         f.write(uploaded_file.getbuffer())
 
-                # Pass the temporary folder path to the Extractor
                 extractor = Extractor(
                     input_path=temp_dir,
                     down_ext=extensions,
                     sep=sep,
                     output_path="./data",
                     encoding=encoding,
-                    is_fwf=is_fwf
+                    is_fwf=is_fwf,
+                    colnames=colnames,
+                    colspecs=colspecs
                 )
-                dask_dfs = extractor.extract()
+                dask_dfs = extractor.s4h_extract()
+                if dask_dfs:
+                    if isinstance(dask_dfs, list):
+                        st.session_state.Data_Sources.extend(dask_dfs)
+                        st.info(f"Added {len(dask_dfs)} datasets to your workspace")
+                    else:
+                        st.session_state.Data_Sources.append(dask_dfs)
+                        st.info("Added 1 dataset to your workspace")
+
+                    st.success("Data extraction completed successfully!")
+                    st.session_state.state = "Data Loaded"
+                    st.rerun()
+                else:
+                    st.error("No data was extracted. Please check your input files.")
 
             except Exception as e:
                 st.error(f"Failed to process {os.path.basename(file_path)}: {str(e)}")
 
 
 st.sidebar.header("Data Summary")
-st.sidebar.write(f"Total databases loaded: {len(st.session_state.Data_Bases)}")
+st.sidebar.write(f"Total databases loaded: {len(st.session_state.Data_Sources)}")
 
-if st.session_state.Data_Bases:
-    st.sidebar.subheader("Loaded Databases")
-    for i, db in enumerate(st.session_state.Data_Bases):
+if st.session_state.Data_Sources:
+    st.sidebar.subheader("Loaded Data Sources:")
+    for i, db in enumerate(st.session_state.Data_Sources):
         if hasattr(db, 'shape'):
             st.sidebar.write(f"DB {i + 1}: {db.shape[0]} rows × {db.shape[1]} columns")
         elif isinstance(db, dict):
