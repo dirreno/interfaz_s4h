@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from socio4health.utils import extractor_utils, harmonizer_utils
 
-from utils import initialize_session_state
+from utils import initialize_session_state, show_session_state
 
 
 def dictionary_standardization(df):
@@ -23,14 +23,6 @@ def dictionary_standardization(df):
 st.set_page_config(page_title="Dictionary Standardization", page_icon="📖", layout="wide")
 
 initialize_session_state()
-if 'state' not in st.session_state:
-    st.session_state.state = "Select Source"
-if 'standardized_dict' not in st.session_state:
-    st.session_state.standardized_dict = None
-if "colnames" not in st.session_state:
-    st.session_state.colnames = None
-if "colspecs" not in st.session_state:
-    st.session_state.colspecs = None
 
 st.title("Dictionary Standardization 📖")
 
@@ -64,6 +56,7 @@ if st.session_state.standardized_dict is not None:
 
     if is_fwf:
         try:
+            st.session_state.is_fwf = is_fwf
             colnames, colspecs = extractor_utils.s4h_parse_fwf_dict(st.session_state.standardized_dict)
             st.session_state.colnames = colnames
             st.session_state.colspecs = colspecs
@@ -88,3 +81,5 @@ if st.session_state.standardized_dict is not None:
         file_name="standardized_dictionary.csv",
         mime="text/csv"
     )
+
+show_session_state()

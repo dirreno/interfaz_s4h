@@ -6,14 +6,11 @@ import tempfile
 from instructions import INSTRUCTIONS
 from socio4health import Extractor
 
+from utils import initialize_session_state, show_session_state
+
 st.set_page_config(page_title="Data Extraction", page_icon="📥", layout="wide")
 
-if 'Data_Sources' not in st.session_state:
-    st.session_state.Data_Sources = []
-if "colnames" not in st.session_state:
-    st.session_state.colnames = None
-if "colspecs" not in st.session_state:
-    st.session_state.colspecs = None
+initialize_session_state()
 
 st.title("Data Extraction 📥")
 
@@ -33,26 +30,24 @@ st.session_state.source_data = st.selectbox(
 
 def handle_extraction(extractor, source_type):
     try:
-        with st.spinner(f"Extracting data from {source_type}..."):
+        with st.status(f"🔄 Extracting data from {source_type}...", expanded=True) as status:
             result = extractor.extract()
 
-        if result:
-            st.success("Data extraction completed successfully!")
-
-            if isinstance(result, list):
-                st.session_state.Data_Sources.extend(result)
-                st.info(f"Added {len(result)} datasets to your workspace")
+            if result:
+                status.update(label="✅ Data extraction completed successfully!", state="complete")
+                if isinstance(result, list):
+                    st.session_state.Data_Sources.extend(result)
+                    st.info(f"Added {len(result)} datasets to your workspace")
+                else:
+                    st.session_state.Data_Sources.append(result)
+                    st.info("Added 1 dataset to your workspace")
+                return True
             else:
-                st.session_state.Data_Sources.append(result)
-                st.info("Added 1 dataset to your workspace")
-
-            return True
-        else:
-            st.error("No data was extracted. Please check your input parameters.")
-            return False
+                status.update(label="⚠️ No data extracted", state="error")
+                return False
 
     except Exception as e:
-        st.error(f"Error during extraction: {str(e)}")
+        st.error(f"❌ Error during extraction: {str(e)}")
         return False
 
 
@@ -155,7 +150,6 @@ elif st.session_state.source_data == "Local file":
         key="file_uploader"
     )
 
-
     files_extensions = [os.path.splitext(f.name)[1].lower() for f in uploaded_files] if uploaded_files else []
     extensions = files_extensions
 
@@ -205,24 +199,4 @@ elif st.session_state.source_data == "Local file":
             except Exception as e:
                 st.error(f"Failed to process {os.path.basename(file_path)}: {str(e)}")
 
-
-st.sidebar.header("Data Summary")
-st.sidebar.write(f"Total databases loaded: {len(st.session_state.Data_Sources)}")
-
-if st.session_state.Data_Sources:
-    st.sidebar.subheader("Loaded Data Sources:")
-    for i, db in enumerate(st.session_state.Data_Sources):
-        if hasattr(db, 'shape'):
-            st.sidebar.write(f"DB {i + 1}: {db.shape[0]} rows × {db.shape[1]} columns")
-        elif isinstance(db, dict):
-            st.sidebar.write(f"DB {i + 1}: Dictionary with {len(db)} keys")
-        else:
-            st.sidebar.write(f"DB {i + 1}: {type(db).__name__}")
-
-st.markdown("""
-    <style>
-    .stButton>button {
-        width: 100%;
-    }
-    </style>
-""", unsafe_allow_html=True)
+show_session_state()
