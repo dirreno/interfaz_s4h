@@ -2,11 +2,12 @@ import streamlit as st
 import pandas as pd
 from socio4health.utils import harmonizer_utils
 
-from utils import mode, initialize_session_state, show_session_state
+from utils import mode, initialize_session_state, show_session_state, add_logo
 from instructions import INSTRUCTIONS
 from socio4health import Harmonizer  # asumiendo que tu clase se llama así
 
 st.set_page_config(page_title="Harmonizer", page_icon="assets/s4h.ico", layout="wide")
+add_logo()
 
 initialize_session_state()
 

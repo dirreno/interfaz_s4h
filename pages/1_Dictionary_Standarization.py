@@ -4,7 +4,6 @@ from socio4health.utils import extractor_utils, harmonizer_utils
 
 from utils import initialize_session_state, show_session_state, add_logo
 
-add_logo()
 
 def dictionary_standardization(df):
     """
@@ -22,6 +21,7 @@ def dictionary_standardization(df):
 
 
 st.set_page_config(page_title="Dictionary Standardization", page_icon="assets/s4h.ico", layout="wide")
+add_logo()
 
 initialize_session_state()
 

@@ -6,9 +6,10 @@ import tempfile
 from instructions import INSTRUCTIONS
 from socio4health import Extractor
 
-from utils import initialize_session_state, show_session_state
+from utils import initialize_session_state, show_session_state, add_logo
 
 st.set_page_config(page_title="Data Extraction", page_icon="assets/s4h.ico", layout="wide")
+add_logo()
 
 initialize_session_state()
 

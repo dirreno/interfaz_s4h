@@ -58,7 +58,7 @@ def mermaid(code: str) -> None:
 
 def add_logo():
     theme = st_theme()
-    if theme.get('base') == 'dark':
+    if theme is not None and theme.get('base') == 'dark':
         logo_url = "https://raw.githubusercontent.com/harmonize-tools/interfaz_s4h/main/assets/logo_alt.png"
     else:
         logo_url = "https://raw.githubusercontent.com/harmonize-tools/interfaz_s4h/main/assets/logo.png"

@@ -5,7 +5,6 @@ from instructions import INSTRUCTIONS
 
 
 st.set_page_config(page_title="Socio4Health Data Analysis", page_icon="assets/s4h.ico", layout="wide")
-
 add_logo()
 
 # Initialize session state
