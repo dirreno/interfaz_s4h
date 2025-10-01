@@ -1,8 +1,6 @@
 import streamlit as st
-import pandas as pd
-import socio4health as s4h
 from streamlit.components.v1 import html
-import json
+from streamlit_theme import st_theme
 
 def initialize_session_state():
     if 'Data_Sources' not in st.session_state:
@@ -59,18 +57,21 @@ def mermaid(code: str) -> None:
     )
 
 def add_logo():
+    theme = st_theme()
+    if theme.get('base') == 'dark':
+        logo_url = "https://raw.githubusercontent.com/harmonize-tools/interfaz_s4h/main/assets/logo_alt.png"
+    else:
+        logo_url = "https://raw.githubusercontent.com/harmonize-tools/interfaz_s4h/main/assets/logo.png"
     st.markdown(
         """
         <style>
             [data-testid="stSidebarNav"] {
-                background-image: url("https://raw.githubusercontent.com/harmonize-tools/socio4health/main/docs/source/_static/image.png");
+                background-image: url(""" + logo_url + """);
                 background-repeat: no-repeat;
                 padding-top: 120px;
-                background-position: 20px 20px;
-                background-size: 70px 70px;
+                background-size: 384px 67px;
             }
             [data-testid="stSidebarNav"]::before {
-                content: "Socio4Health";
                 margin-left: 20px;
                 margin-top: 20px;
                 font-size: 30px;

@@ -3,7 +3,8 @@ from utils import initialize_session_state, mermaid, add_logo
 import extra_streamlit_components as stx
 from instructions import INSTRUCTIONS
 
-st.set_page_config(page_title="Socio4Health Data Analysis", page_icon="🏠", layout="wide")
+
+st.set_page_config(page_title="Socio4Health Data Analysis", page_icon="assets/s4h.ico", layout="wide")
 
 add_logo()
 
@@ -14,11 +15,8 @@ with st.expander("ℹ️ Instructions", expanded=False):
     st.markdown(INSTRUCTIONS["home_page"])
 
 # Sidebar
-st.sidebar.markdown('Developed by Harmonize')
-st.sidebar.markdown('<a href="mailto:es.lozano@uniandes.edu.com">:email: Contact Us</a>', unsafe_allow_html=True)
-
-with st.sidebar:
-    stx.stepper_bar(steps=["Load Data", "Filter Data", "Chat / Agg"],  is_vertical=0, lock_sequence=False)
+st.sidebar.markdown('Developed by Harmonize team')
+st.sidebar.markdown('<a href="mailto:d.irrenotorres@uniandes.edu.co">:email: Contact Us</a>', unsafe_allow_html=True)
 
 
 # Main content
@@ -105,7 +103,3 @@ The following datasets are currently available for analysis:
 
 Explore these datasets to uncover valuable insights about public health and demographics.
 """)
-
-# Footer
-st.markdown("---")
-st.markdown("© 2024 Socio4Health. All rights reserved.")

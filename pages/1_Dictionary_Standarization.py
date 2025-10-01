@@ -21,7 +21,7 @@ def dictionary_standardization(df):
     return None
 
 
-st.set_page_config(page_title="Dictionary Standardization", page_icon="📖", layout="wide")
+st.set_page_config(page_title="Dictionary Standardization", page_icon="assets/s4h.ico", layout="wide")
 
 initialize_session_state()
 
