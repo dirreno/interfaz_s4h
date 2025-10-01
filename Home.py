@@ -1,9 +1,11 @@
 import streamlit as st
-from utils import initialize_session_state, mermaid
+from utils import initialize_session_state, mermaid, add_logo
 import extra_streamlit_components as stx
 from instructions import INSTRUCTIONS
 
 st.set_page_config(page_title="Socio4Health Data Analysis", page_icon="🏠", layout="wide")
+
+add_logo()
 
 # Initialize session state
 initialize_session_state()

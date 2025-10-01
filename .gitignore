@@ -4,3 +4,5 @@ pruebas.py
 *.log
 data
 .idea
+*.pyc
+/__pycache__

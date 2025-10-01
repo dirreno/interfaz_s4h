@@ -57,3 +57,26 @@ def mermaid(code: str) -> None:
         """,
         height= 250,
     )
+
+def add_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url("https://raw.githubusercontent.com/harmonize-tools/socio4health/main/docs/source/_static/image.png");
+                background-repeat: no-repeat;
+                padding-top: 120px;
+                background-position: 20px 20px;
+                background-size: 70px 70px;
+            }
+            [data-testid="stSidebarNav"]::before {
+                content: "Socio4Health";
+                margin-left: 20px;
+                margin-top: 20px;
+                font-size: 30px;
+                position: relative;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )

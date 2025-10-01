@@ -2,8 +2,9 @@ import streamlit as st
 import pandas as pd
 from socio4health.utils import extractor_utils, harmonizer_utils
 
-from utils import initialize_session_state, show_session_state
+from utils import initialize_session_state, show_session_state, add_logo
 
+add_logo()
 
 def dictionary_standardization(df):
     """
