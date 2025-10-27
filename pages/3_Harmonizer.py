@@ -90,9 +90,8 @@ with st.expander("Dictionary Grouping Options", expanded=False):
                 har.dict_df = dic
                 st.session_state.standardized_dict = dic
 
+                # Do not preview translated dictionary to avoid exposing large intermediate data in the UI.
                 st.success("Dictionary translation completed")
-                st.write("Preview of Translated dictionary:")
-                st.dataframe(dic.head(5))
 
             except Exception as e:
                 st.error(f"Error during dictionary translation: {e}")
@@ -117,6 +116,19 @@ with st.expander("Dictionary Grouping Options", expanded=False):
                 st.write("Preview of classified dictionary:")
                 st.dataframe(classified_dic.head(5))
 
+                # Add a download button so users can save the classified dictionary as CSV
+                try:
+                    csv = classified_dic.to_csv(index=False)
+                    st.download_button(
+                        label="Download classified dictionary as CSV",
+                        data=csv,
+                        file_name="classified_dictionary.csv",
+                        mime="text/csv",
+                    )
+                except Exception:
+                    # If conversion to CSV fails (e.g., complex dtypes), fall back to Pandas string conversion
+                    st.warning("Unable to generate CSV for download (unexpected dtype).")
+
             except Exception as e:
                 st.error(f"Error during dictionary classification: {str(e)}")
                 raise e
@@ -134,7 +146,8 @@ with st.expander("Data Joining Options", expanded=False):
             "Identification", "Migration", "Nonstandard job", "Social Security"
         ]
     )
-    har.categories = [str(category)]
+    # `st.multiselect` returns a list of selected categories; pass it directly.
+    har.categories = category
     har.key_col = st.selectbox("Column Selection", options=options, index=0)
     har.key_val = st.text_input("Values (comma separated)").split(',')
 
