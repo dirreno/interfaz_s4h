@@ -58,7 +58,7 @@ def render_csv_options():
         sep = st.text_input("Separator", value=",", key="csv_sep")
         encoding = st.selectbox(
             "Encoding",
-            ['utf-8', 'latin1', 'iso-8859-1', 'cp1252'],
+            ['latin1', 'utf-8', 'iso-8859-1', 'cp1252'],
             key="csv_encoding"
         )
     return sep, encoding
@@ -102,6 +102,10 @@ if st.session_state.source_data == "Internet (URL)":
 
         if any(ext in ['.txt'] for ext in extensions):
             is_fwf,colnames,colspecs = render_fwf_options()
+        else:
+            is_fwf = False
+            colnames = None
+            colspecs = None
         if any(ext in ['.csv', '.txt'] for ext in extensions):
             sep, encoding = render_csv_options()
 
@@ -158,6 +162,10 @@ elif st.session_state.source_data == "Local file":
 
     if any(ext in ['.txt'] for ext in extensions):
         is_fwf, colnames, colspecs = render_fwf_options()
+    else:
+        is_fwf = False
+        colnames = None
+        colspecs = None
 
     sep = ','
     encoding = 'latin1'
@@ -165,39 +173,41 @@ elif st.session_state.source_data == "Local file":
         sep, encoding = render_csv_options()
 
     if uploaded_files is not None and st.button("Process Local Files"):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            try:
-                for uploaded_file in uploaded_files:
-                    file_path = Path(temp_dir) / uploaded_file.name
-                    with open(file_path, "wb") as f:
-                        f.write(uploaded_file.getbuffer())
+        if 'temp_dir' not in st.session_state:
+            st.session_state.temp_dir = tempfile.mkdtemp()
 
-                extractor = Extractor(
-                    input_path=temp_dir,
-                    down_ext=extensions,
-                    sep=sep,
-                    output_path="./data",
-                    encoding=encoding,
-                    is_fwf=is_fwf,
-                    colnames=colnames,
-                    colspecs=colspecs
-                )
-                dask_dfs = extractor.s4h_extract()
-                if dask_dfs:
-                    if isinstance(dask_dfs, list):
-                        st.session_state.Data_Sources.extend(dask_dfs)
-                        st.info(f"Added {len(dask_dfs)} datasets to your workspace")
-                    else:
-                        st.session_state.Data_Sources.append(dask_dfs)
-                        st.info("Added 1 dataset to your workspace")
+        try:
+            for uploaded_file in uploaded_files:
+                file_path = Path(st.session_state.temp_dir) / uploaded_file.name
+                with open(file_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
 
-                    st.success("Data extraction completed successfully!")
-                    st.session_state.state = "Data Loaded"
-                    st.rerun()
+            extractor = Extractor(
+                input_path=st.session_state.temp_dir,
+                down_ext=extensions,
+                sep=sep,
+                output_path="./data",
+                encoding=encoding,
+                is_fwf=is_fwf,
+                colnames=colnames,
+                colspecs=colspecs
+            )
+            dask_dfs = extractor.s4h_extract()
+            if dask_dfs:
+                if isinstance(dask_dfs, list):
+                    st.session_state.Data_Sources.extend(dask_dfs)
+                    st.info(f"Added {len(dask_dfs)} datasets to your workspace")
                 else:
-                    st.error("No data was extracted. Please check your input files.")
+                    st.session_state.Data_Sources.append(dask_dfs)
+                    st.info("Added 1 dataset to your workspace")
 
-            except Exception as e:
-                st.error(f"Failed to process {os.path.basename(file_path)}: {str(e)}")
+                st.success("Data extraction completed successfully!")
+                st.session_state.state = "Data Loaded"
+                st.rerun()
+            else:
+                st.error("No data was extracted. Please check your input files.")
+
+        except Exception as e:
+            st.error(f"Failed to process {os.path.basename(file_path)}: {str(e)}")
 
 show_session_state()

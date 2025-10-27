@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 from socio4health.utils import harmonizer_utils
@@ -58,12 +61,29 @@ with st.expander("Dictionary Grouping Options", expanded=False):
     options = har.s4h_get_available_columns(dfs)
     extra_cols = st.multiselect("Extra Columns", options=options)
     har.extra_cols = extra_cols
-    model = st.file_uploader("Choose Model", accept_multiple_files=True)
+
+    model_file = st.file_uploader("Choose Model", type=["zip"])
+
     if st.button("Run Dictionary Grouping"):
+        if model_file is None:
+            st.error("Please upload a model file")
+            st.stop()
+
+        # Create models directory in project root
+        models_dir = Path("bert_model")
+        if models_dir.exists():
+            import shutil
+            shutil.rmtree(models_dir)
+        models_dir.mkdir(exist_ok=True)
+
+        # Extract model files
+        import zipfile
+        with zipfile.ZipFile(model_file, 'r') as zip_ref:
+            zip_ref.extractall(models_dir)
+
         with st.spinner("Running dictionary translation..."):
             try:
                 dic = st.session_state.standardized_dict
-
                 dic = harmonizer_utils.s4h_translate_column(dic, "question", language="en")
                 dic = harmonizer_utils.s4h_translate_column(dic, "description", language="en")
                 dic = harmonizer_utils.s4h_translate_column(dic, "possible_answers", language="en")
@@ -79,27 +99,27 @@ with st.expander("Dictionary Grouping Options", expanded=False):
 
         with st.spinner("Running dictionary classification..."):
             try:
-                dfs = harmonizer_utils.s4h_classify_rows(
-                    dic,
-                    "question_en",
-                    "description_en",
-                    "possible_answers_en",
-                    new_column_name="category",
-                    MODEL_PATH=model
-                )
+                dic = st.session_state.standardized_dict
 
-                st.session_state.Data_Sources = dfs
-                st.write("Preview of Grouped data:")
-                for i, df in enumerate(dfs):
-                    st.write(f"DataFrame {i + 1} shape: {len(df)} rows, {len(df.columns)} columns")
-                    st.dataframe(df.head(5))
+                required_cols = ["question_en", "description_en", "possible_answers_en"]
+                missing_cols = [col for col in required_cols if col not in dic.columns]
+                if missing_cols:
+                    st.error(f"Missing required columns: {', '.join(missing_cols)}")
+                    st.stop()
+
+                classified_dic = harmonizer_utils.s4h_classify_rows(dic, "question_en", "description_en", "possible_answers_en",
+                                        new_column_name="category",
+                                        MODEL_PATH="bert_model")
+
+                st.session_state.standardized_dict = classified_dic
 
                 st.success("Dictionary classification completed")
                 st.write("Preview of classified dictionary:")
-                st.dataframe(dic.head(5))
+                st.dataframe(classified_dic.head(5))
 
             except Exception as e:
-                st.error(f"Error during dictionary classification: {e}")
+                st.error(f"Error during dictionary classification: {str(e)}")
+                raise e
 
 st.subheader("Data Selector")
 with st.expander("Data Joining Options", expanded=False):
